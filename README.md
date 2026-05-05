@@ -45,7 +45,7 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/data/nextbeats` - Application data
+- `./volumes/data/nextbeats` - Application data
 
 ## 🔍 Logging
 
