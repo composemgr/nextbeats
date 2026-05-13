@@ -17,6 +17,8 @@ services:
     logging: *default-logging
     environment:
       TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: nextbeats-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
     ports:
       - '172.17.0.1:60489:3000'
     healthcheck:
@@ -27,8 +29,30 @@ services:
       start_period: 90s
     networks:
       - nextbeats
+      - proxy
+      - cloudflare
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://nextbeats-app:3000'
+      - 'cloudflare.hostname=nextbeats.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.nextbeats-app.entrypoints=http'
+      - 'traefik.http.routers.nextbeats-app-secure.tls=true'
+      - 'traefik.http.routers.nextbeats-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.nextbeats-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.nextbeats-app.middlewares=nextbeats-app-https-redirect'
+      - 'traefik.http.routers.nextbeats-app-secure.entrypoints=https'
+      - 'traefik.http.routers.nextbeats-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.nextbeats-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.nextbeats-app-secure.service=nextbeats-app'
+      - 'traefik.http.services.nextbeats-app.loadbalancer.server.port=3000'
 
 networks:
   nextbeats:
     name: nextbeats
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
